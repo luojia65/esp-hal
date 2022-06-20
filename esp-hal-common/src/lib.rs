@@ -35,7 +35,7 @@ pub mod delay;
 #[cfg_attr(feature = "esp32s3", path = "efuse/esp32s3.rs")]
 pub mod efuse;
 
-#[cfg(target_arch = "riscv32")]
+#[cfg(any(feature = "esp32c3", feature = "esp32s3"))]
 pub mod embassy;
 pub mod gpio;
 pub mod i2c;
