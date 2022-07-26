@@ -10,6 +10,8 @@
 //! interrupt15() => Priority::Priority15
 //! ```
 
+pub static mut INTERRUPT_START: u64 = 0;
+
 use riscv::register::mcause;
 
 use crate::{
@@ -303,6 +305,7 @@ mod vectored {
 
     #[ram]
     unsafe fn handle_interrupts(cpu_intr: CpuInterrupt, context: &mut TrapFrame) {
+        INTERRUPT_START = crate::systimer::SystemTimer::now();
         let status = get_status(crate::get_core());
 
         // this has no effect on level interrupts, but the interrupt may be an edge one
