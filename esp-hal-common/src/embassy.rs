@@ -8,8 +8,6 @@ pub fn init() -> Peripherals {
     // before doing anything important.
     let peripherals = Peripherals::take().unwrap(); // TODO make new `Peripherals` without SYSTIMER as we use it in embassy
 
-    // TODO implement the system timer
-    // TODO initialize it here
     EmbassyTimer::init();
 
     peripherals

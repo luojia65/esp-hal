@@ -6,7 +6,10 @@ use embassy::{
     time::driver::{AlarmHandle, Driver},
 };
 
-use crate::systimer::{Alarm, SystemTimer, Target};
+use crate::{
+    pac,
+    systimer::{Alarm, SystemTimer, Target},
+};
 
 const ALARM_COUNT: usize = 3;
 
@@ -65,123 +68,35 @@ impl EmbassyTimer {
             0 => self.alarm0.clear_interrupt(),
             1 => self.alarm1.clear_interrupt(),
             2 => self.alarm2.clear_interrupt(),
-            _ => panic!(),
+            _ => unreachable!(),
         };
         critical_section::with(|cs| {
             self.trigger_alarm(id as usize, cs);
         })
     }
 
-    #[cfg(feature = "esp32c3")]
+    #[cfg(any(feature = "esp32c3", feature = "esp32s3"))]
     pub fn init() {
-        use crate::{interrupt, pac, Cpu};
+        use procmacros::interrupt;
 
-        interrupt::enable(
-            Cpu::ProCpu,
-            pac::Interrupt::SYSTIMER_TARGET0,
-            interrupt::CpuInterrupt::Interrupt1,
-        );
-        interrupt::enable(
-            Cpu::ProCpu,
-            pac::Interrupt::SYSTIMER_TARGET1,
-            interrupt::CpuInterrupt::Interrupt2,
-        );
-        interrupt::enable(
-            Cpu::ProCpu,
-            pac::Interrupt::SYSTIMER_TARGET2,
-            interrupt::CpuInterrupt::Interrupt3,
-        );
-        interrupt::set_kind(
-            Cpu::ProCpu,
-            interrupt::CpuInterrupt::Interrupt1,
-            interrupt::InterruptKind::Level,
-        );
-        interrupt::set_kind(
-            Cpu::ProCpu,
-            interrupt::CpuInterrupt::Interrupt2,
-            interrupt::InterruptKind::Level,
-        );
-        interrupt::set_kind(
-            Cpu::ProCpu,
-            interrupt::CpuInterrupt::Interrupt3,
-            interrupt::InterruptKind::Level,
-        );
-        interrupt::set_priority(
-            Cpu::ProCpu,
-            interrupt::CpuInterrupt::Interrupt1,
-            interrupt::Priority::Priority1,
-        );
-        interrupt::set_priority(
-            Cpu::ProCpu,
-            interrupt::CpuInterrupt::Interrupt2,
-            interrupt::Priority::Priority1,
-        );
-        interrupt::set_priority(
-            Cpu::ProCpu,
-            interrupt::CpuInterrupt::Interrupt3,
-            interrupt::Priority::Priority1,
-        );
+        use crate::interrupt;
 
-        #[no_mangle]
-        pub fn interrupt1() {
+        // TODO these priorities should probably be higher than 1...
+        interrupt::enable(pac::Interrupt::SYSTIMER_TARGET0, crate::Priority::Priority1).unwrap();
+        interrupt::enable(pac::Interrupt::SYSTIMER_TARGET1, crate::Priority::Priority1).unwrap();
+        interrupt::enable(pac::Interrupt::SYSTIMER_TARGET2, crate::Priority::Priority1).unwrap();
+
+        #[interrupt]
+        fn SYSTIMER_TARGET0() {
             DRIVER.on_interrupt(0);
         }
-        #[no_mangle]
-        pub fn interrupt2() {
+        #[interrupt]
+        fn SYSTIMER_TARGET1() {
             DRIVER.on_interrupt(1);
         }
-        #[no_mangle]
-        pub fn interrupt3() {
+        #[interrupt]
+        fn SYSTIMER_TARGET2() {
             DRIVER.on_interrupt(2);
-        }
-    }
-
-    #[cfg(feature = "esp32s3")]
-    pub fn init() {
-        use crate::{interrupt, pac, Cpu};
-        interrupt::enable(
-            Cpu::ProCpu,
-            pac::Interrupt::SYSTIMER_TARGET0,
-            interrupt::CpuInterrupt::Interrupt0LevelPriority1,
-        );
-
-        interrupt::enable(
-            Cpu::ProCpu,
-            pac::Interrupt::SYSTIMER_TARGET1,
-            interrupt::CpuInterrupt::Interrupt19LevelPriority2,
-        );
-
-        interrupt::enable(
-            Cpu::ProCpu,
-            pac::Interrupt::SYSTIMER_TARGET2,
-            interrupt::CpuInterrupt::Interrupt23LevelPriority3,
-        );
-
-        #[no_mangle]
-        pub fn level1_interrupt() {
-            DRIVER.on_interrupt(0);
-            interrupt::clear(
-                Cpu::ProCpu,
-                interrupt::CpuInterrupt::Interrupt0LevelPriority1,
-            );
-        }
-
-        #[no_mangle]
-        pub fn level2_interrupt() {
-            DRIVER.on_interrupt(1);
-            interrupt::clear(
-                Cpu::ProCpu,
-                interrupt::CpuInterrupt::Interrupt19LevelPriority2,
-            );
-        }
-
-        #[no_mangle]
-        pub fn level3_interrupt() {
-            DRIVER.on_interrupt(2);
-            interrupt::clear(
-                Cpu::ProCpu,
-                interrupt::CpuInterrupt::Interrupt23LevelPriority3,
-            );
         }
     }
 }

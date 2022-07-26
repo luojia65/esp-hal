@@ -5,14 +5,12 @@
 
 use embassy::{
     self,
-    executor::{Executor},
+    executor::Executor,
     time::{Duration, Timer},
     util::Forever,
 };
-use esp32s3_hal::{prelude::*, RtcCntl, Timer as EspTimer};
-use esp_backtrace as _;
-
-const ENABLE_MASK: u32 = 1 << 19 | 1 << 0 | 1 << 23 ;
+use esp32s3_hal::{clock::ClockControl, prelude::*, timer::TimerGroup, RtcCntl};
+use panic_halt as _;
 
 #[embassy::task]
 async fn run_low() {
@@ -35,25 +33,22 @@ static EXECUTOR_LOW: Forever<Executor> = Forever::new();
 #[xtensa_lx_rt::entry]
 fn main() -> ! {
     let p = esp32s3_hal::embassy::init();
+    let system = p.SYSTEM.split();
+    let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
+    let timer_group0 = TimerGroup::new(p.TIMG0, &clocks);
+    let mut wdt = timer_group0.wdt;
     let mut rtc_cntl = RtcCntl::new(p.RTC_CNTL);
-    let mut timer0 = EspTimer::new(p.TIMG0);
 
     // Disable MWDT and RWDT (Watchdog) flash boot protection
-    timer0.disable();
+    wdt.disable();
     rtc_cntl.set_wdt_global_enable(false);
-
-    esp_println::println!("About to enable interrupts");
-
-    unsafe {
-        xtensa_lx::interrupt::enable_mask(ENABLE_MASK);
-    }
 
     let executor = EXECUTOR_LOW.put(Executor::new());
     executor.run(|spawner| {
         spawner.spawn(run_low()).ok();
         spawner.spawn(run2()).ok();
-    });
+    })
 }
 
 

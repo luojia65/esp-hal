@@ -8,7 +8,7 @@ use embassy::{
     time::{Duration, Timer},
     util::Forever,
 };
-use esp32c3_hal::{prelude::*, RtcCntl, Timer as EspTimer};
+use esp32c3_hal::{clock::ClockControl, prelude::*, timer::TimerGroup, RtcCntl};
 use panic_halt as _;
 
 #[embassy::task]
@@ -32,15 +32,21 @@ static EXECUTOR_LOW: Forever<Executor> = Forever::new();
 #[riscv_rt::entry]
 fn main() -> ! {
     let p = esp32c3_hal::embassy::init();
+    let system = p.SYSTEM.split();
+    let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
+    // Disable the watchdog timers. For the ESP32-C3, this includes the Super WDT,
+    // the RTC WDT, and the TIMG WDTs.
     let mut rtc_cntl = RtcCntl::new(p.RTC_CNTL);
-    let mut timer0 = EspTimer::new(p.TIMG0);
-    let mut timer1 = EspTimer::new(p.TIMG1);
+    let timer_group0 = TimerGroup::new(p.TIMG0, &clocks);
+    let mut wdt0 = timer_group0.wdt;
+    let timer_group1 = TimerGroup::new(p.TIMG1, &clocks);
+    let mut wdt1 = timer_group1.wdt;
 
     rtc_cntl.set_super_wdt_enable(false);
     rtc_cntl.set_wdt_enable(false);
-    timer0.disable();
-    timer1.disable();
+    wdt0.disable();
+    wdt1.disable();
 
     let executor = EXECUTOR_LOW.put(Executor::new());
     executor.run(|spawner| {
