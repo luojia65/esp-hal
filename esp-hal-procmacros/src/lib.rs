@@ -227,6 +227,10 @@ pub fn interrupt(args: TokenStream, input: TokenStream) -> TokenStream {
     let context_call =
         (f.sig.inputs.len() == 1).then_some(Ident::new("context", proc_macro2::Span::call_site()));
 
+    if let Some(pos) = f.attrs.iter().position(|f| eq(f, "inline")) {
+        f.attrs.remove(pos);
+    }
+
     quote!(
         #(#cfgs)*
         #(#attrs)*
