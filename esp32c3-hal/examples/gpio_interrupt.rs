@@ -69,6 +69,7 @@ fn main() -> ! {
     }
 }
 
+#[ram]
 #[interrupt]
 unsafe fn GPIO() {
     let latency =
