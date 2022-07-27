@@ -7,7 +7,6 @@ pub use esp_hal_common::{
     clock,
     efuse,
     gpio as gpio_types,
-    embassy,
     i2c,
     interrupt,
     macros,

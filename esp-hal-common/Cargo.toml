@@ -35,9 +35,6 @@ ufmt-write = { version = "0.1", optional = true }
 # Smart-LED (e.g., WS2812/SK68XX) support
 smart-leds-trait = { version = "0.2.1", optional = true }
 
-# Embassy
-embassy = { git = "https://github.com/embassy-rs/embassy", rev = "e4fbfaf", features = ["nightly", "time-tick-16mhz"] }
-
 # IMPORTANT:
 # Each supported device MUST have its PAC included below along with a
 # corresponding feature. We rename the PAC packages because we cannot

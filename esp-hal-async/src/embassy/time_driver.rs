@@ -77,14 +77,12 @@ impl EmbassyTimer {
 
     #[cfg(any(feature = "esp32c3", feature = "esp32s3"))]
     pub fn init() {
-        use procmacros::interrupt;
-
-        use crate::interrupt;
+        use crate::{interrupt, interrupt::Priority, macros::interrupt};
 
         // TODO these priorities should probably be higher than 1...
-        interrupt::enable(pac::Interrupt::SYSTIMER_TARGET0, crate::Priority::Priority1).unwrap();
-        interrupt::enable(pac::Interrupt::SYSTIMER_TARGET1, crate::Priority::Priority1).unwrap();
-        interrupt::enable(pac::Interrupt::SYSTIMER_TARGET2, crate::Priority::Priority1).unwrap();
+        interrupt::enable(pac::Interrupt::SYSTIMER_TARGET0, Priority::Priority1).unwrap();
+        interrupt::enable(pac::Interrupt::SYSTIMER_TARGET1, Priority::Priority1).unwrap();
+        interrupt::enable(pac::Interrupt::SYSTIMER_TARGET2, Priority::Priority1).unwrap();
 
         #[interrupt]
         fn SYSTIMER_TARGET0() {

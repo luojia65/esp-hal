@@ -32,11 +32,6 @@ riscv          = "0.8"
 riscv-rt       = { version = "0.9", optional = true }
 critical-section = "0.2.7"
 
-[dependencies.embassy]
-git      = "https://github.com/embassy-rs/embassy"
-rev      = "84cffc751ac0a38e6736959e68d441b99138d6d0"
-features = ["nightly", "time", "time-tick-16mhz"]
-
 [dependencies.esp-hal-common]
 path     = "../esp-hal-common"
 features = ["esp32c3"]

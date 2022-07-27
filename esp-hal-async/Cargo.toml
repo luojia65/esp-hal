@@ -1,0 +1,22 @@
+[package]
+name = "esp-hal-async"
+authors = ["Scott Mabin <scott@mabez.dev>"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+embassy = { git = "https://github.com/embassy-rs/embassy", rev = "84cffc751ac0a38e6736959e68d441b99138d6d0", features = ["nightly", "time-tick-16mhz"] } # TODO make optional
+critical-section = "0.2"
+esp32c3-hal = { version = "0.1.0", path     = "../esp32c3-hal", optional= true }
+esp32s3-hal = { version = "0.1.0", path     = "../esp32s3-hal", optional= true }
+
+riscv-rt       = { version = "0.9", optional = true } # TODO reexport from esp-hal-common?
+xtensa-lx-rt   = { version = "0.13", optional = true } # TODO reexport from esp-hal-common?
+
+[features]
+esp32c3 = ["dep:esp32c3-hal", "dep:riscv-rt", "esp-backtrace/esp32c3", "esp-println/esp32c3"]
+esp32s3 = ["dep:esp32s3-hal", "dep:xtensa-lx-rt", "esp-backtrace/esp32s3", "esp-println/esp32s3"]
+
+[dev-dependencies]
+esp-println       = { version = "0.2.0" }
+esp-backtrace = { git = "https://github.com/esp-rs/esp-backtrace", features = ["panic-handler", "exception-handler"]}

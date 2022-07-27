@@ -18,7 +18,6 @@ pub use esp_hal_common::{
     spi,
     systimer,
     timer,
-    embassy,
     usb_serial_jtag,
     utils,
     Cpu,
