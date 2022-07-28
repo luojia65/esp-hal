@@ -9,14 +9,25 @@ use embassy::{
     time::{Duration, Timer},
     util::Forever,
 };
-use esp_hal_async::{clock::ClockControl, prelude::*, timer::TimerGroup, RtcCntl};
+use embedded_hal_async::digital::Wait;
+use esp32c3_hal::gpio::Gpio1;
 use esp_backtrace as _;
+use esp_hal_async::{
+    clock::ClockControl,
+    gpio::AsyncPin,
+    interrupt,
+    prelude::*,
+    timer::TimerGroup,
+    RtcCntl,
+    IO,
+};
+use esp_hal_common::{Input, PullDown};
 
 #[embassy::task]
 async fn run1() {
     loop {
         esp_println::println!("Hello world from embassy using esp-hal-async!");
-        Timer::after(Duration::from_millis(1000)).await;
+        Timer::after(Duration::from_millis(10_000)).await;
     }
 }
 
@@ -24,7 +35,15 @@ async fn run1() {
 async fn run2() {
     loop {
         esp_println::println!("Bing!");
-        Timer::after(Duration::from_millis(3000)).await;
+        Timer::after(Duration::from_millis(30_000)).await;
+    }
+}
+
+#[embassy::task]
+async fn run3(mut pin: AsyncPin<Gpio1<Input<PullDown>>>) {
+    loop {
+        pin.wait_for_rising_edge().await.unwrap();
+        esp_println::println!("Button Pressed!");
     }
 }
 
@@ -55,13 +74,26 @@ fn main() -> ! {
     wdt0.disable();
     wdt1.disable();
 
+    let io = IO::new(p.GPIO, p.IO_MUX);
+
+    // Set GPIO1 as an input
+    let button = io.pins.gpio1.into_pull_down_input();
+
+    interrupt::enable(
+        esp_hal_async::pac::Interrupt::GPIO,
+        crate::interrupt::Priority::Priority1,
+    )
+    .unwrap();
+
+    let async_button = AsyncPin(button);
+
     let executor = EXECUTOR.put(Executor::new());
     executor.run(|spawner| {
         spawner.spawn(run1()).ok();
         spawner.spawn(run2()).ok();
+        spawner.spawn(run3(async_button)).ok();
     });
 }
-
 
 #[cfg(feature = "esp32s3")]
 mod cs {

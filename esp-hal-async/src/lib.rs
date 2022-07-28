@@ -17,8 +17,11 @@
 //! [esp32s3-hal]: https://github.com/esp-rs/esp-hal/tree/main/esp32s3-hal
 
 #![no_std]
+#![feature(into_future)]
+#![feature(generic_associated_types)]
 
 pub mod embassy;
+pub mod gpio;
 
 #[cfg(feature = "esp32")]
 pub use esp32_hal::*;

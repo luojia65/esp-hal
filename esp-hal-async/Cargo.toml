@@ -7,8 +7,11 @@ edition = "2021"
 [dependencies]
 embassy = { git = "https://github.com/embassy-rs/embassy", rev = "84cffc751ac0a38e6736959e68d441b99138d6d0", features = ["nightly", "time-tick-16mhz"] } # TODO make optional
 critical-section = "0.2"
-esp32c3-hal = { version = "0.1.0", path     = "../esp32c3-hal", optional= true }
-esp32s3-hal = { version = "0.1.0", path     = "../esp32s3-hal", optional= true }
+esp-hal-common = { version = "0.1.0", path = "../esp-hal-common", features = ["eh1"] }
+embedded-hal-async = "0.1.0-alpha.1"
+embedded-hal = { version = "=1.0.0-alpha.8"}
+esp32c3-hal = { version = "0.1.0", path     = "../esp32c3-hal", optional= true, features = ["eh1"] }
+esp32s3-hal = { version = "0.1.0", path     = "../esp32s3-hal", optional= true, features = ["eh1"] }
 
 riscv-rt       = { version = "0.9", optional = true } # TODO reexport from esp-hal-common?
 xtensa-lx-rt   = { version = "0.13", optional = true } # TODO reexport from esp-hal-common?

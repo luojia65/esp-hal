@@ -105,6 +105,8 @@ pub trait Pin {
         wake_up_from_light_sleep: bool,
     );
 
+    fn is_listening(&self) -> bool;
+
     fn unlisten(&mut self);
 
     fn clear_interrupt(&mut self);
@@ -687,6 +689,11 @@ macro_rules! impl_input {
                 unsafe { (&*GPIO::PTR).pin[$pin_num].modify(|_, w|
                     w.pin_int_ena().bits(0).pin_int_type().bits(0).pin_int_ena().bits(0) );
                 }
+            }
+
+            fn is_listening(&self) -> bool {
+                let bits = unsafe { (&*GPIO::PTR) }.pin[$pin_num].read().pin_int_ena().bits();
+                bits != 0
             }
 
             fn clear_interrupt(&mut self) {
