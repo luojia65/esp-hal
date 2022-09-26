@@ -49,6 +49,7 @@ pub mod delay;
 pub mod gpio;
 pub mod i2c;
 pub mod ledc;
+pub mod peripheral;
 pub mod prelude;
 pub mod pulse_control;
 pub mod rng;
@@ -218,3 +219,56 @@ mod critical_section_impl {
         }
     }
 }
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! into_ref {
+    ($($name:ident),*) => {
+        $(
+            let $name = $name.into_ref();
+        )*
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! impl_peripheral_trait {
+    ($type:ident) => {
+        unsafe impl Send for $type {}
+
+        impl $crate::peripheral::sealed::Sealed for $type {}
+
+        impl $crate::peripheral::Peripheral for $type {
+            type P = $type;
+
+            #[inline]
+            unsafe fn clone_unchecked(&mut self) -> Self::P {
+                $type { ..*self }
+            }
+        }
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! impl_peripheral {
+    ($type:ident) => {
+        pub struct $type(::core::marker::PhantomData<*const ()>);
+
+        impl $type {
+            /// # Safety
+            ///
+            /// Care should be taken not to instnatiate this peripheral instance, if it
+            /// is already instantiated and used elsewhere
+            #[inline(always)]
+            pub unsafe fn new() -> Self {
+                $type(::core::marker::PhantomData)
+            }
+        }
+
+        $crate::impl_peripheral_trait!($type);
+    };
+}
+
+#[allow(unused_imports)]
+pub(crate) use impl_peripheral;
+#[allow(unused_imports)]
+pub(crate) use impl_peripheral_trait;
